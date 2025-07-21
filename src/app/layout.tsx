@@ -7,6 +7,7 @@ import Loading from "./loading";
 import Error from "./error";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import NavbarWrapper from "@/components/header/NavbarWrapper";
+import { Providers } from "@/lib/Providers";
 
 const ubuntu = Ubuntu({
   variable: "--font-ubuntu",
@@ -93,13 +94,15 @@ export default function RootLayout({
       <body
         className={`${ubuntu.variable} ${suwannaphum.variable} antialiased`}
       >
-        <ErrorBoundary errorComponent={Error}>
+        <Providers>
+          <ErrorBoundary errorComponent={Error}>
           
           <Suspense fallback={<Loading />}>
           <NavbarWrapper />
             {children}
           </Suspense>
         </ErrorBoundary>
+        </Providers>
       </body>
     </html>
   );
