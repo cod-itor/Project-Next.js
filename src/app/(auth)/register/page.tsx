@@ -1,184 +1,220 @@
 'use client'
-import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from "zod"
-import { zodResolver } from '@hookform/resolvers/zod'
+import React,{useState} from 'react'
+import {   undefined, z } from 'zod'
+import { Button } from "@/components/ui/button"
+import { useForm } from "react-hook-form"
+import {zodResolver} from "@hookform/resolvers/zod"
 import {
-    Form,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormControl,
-    FormMessage
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+  Form, 
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import {
+  Card,
 
-// Simple eye icons (replace with your icon library if needed)
-function EyeIcon({ className = "" }: { className?: string }) {
-    return (
-        <svg className={className} width="20" height="20" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" strokeWidth="2" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" />
-            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
-        </svg>
-    )
-}
-function EyeOffIcon({ className = "" }: { className?: string }) {
-    return (
-        <svg className={className} width="20" height="20" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" strokeWidth="2" d="M3 3l18 18M10.7 6.3A9.77 9.77 0 0 1 12 5c7 0 11 7 11 7a19.7 19.7 0 0 1-5.1 6.1M6.1 6.1A19.7 19.7 0 0 0 1 12s4 7 11 7a9.77 9.77 0 0 0 5.7-1.7" />
-            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
-        </svg>
-    )
-}
+  CardAction,
 
-const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { IoMdEye } from "react-icons/io";
+import { IoMdEyeOff } from "react-icons/io";
+import Image from 'next/image';
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 5MB
+const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 const formSchema = z.object({
-    username: z
-        .string()
-        .min(3, "Username must be at least 3 characters")
-        .max(20, "Username must be at most 20 characters")
-        .regex(usernameRegex, "Username can contain letters, numbers, and underscores only"),
-    email: z
-        .string()
-        .email("Invalid email address"),
-    password: z
-        .string()
-        .min(8, "Password must be at least 8 characters")
-        .regex(passwordRegex, "Password must include at least one letter, one number, and one special character"),
-    confirmPassword: z
-        .string()
-        .min(8, "Confirm Password must be at least 8 characters")
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match. Please make sure both passwords are identical.",
-    path: ["confirmPassword"],
-})
-
-type FormValues = z.infer<typeof formSchema>
-
-export default function Page() {
-    const form = useForm<FormValues>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            username: '',
-            email: '',
-            password: '',
-            confirmPassword: ''
-        }
+  username: z.string()
+        .min(8, {
+        message: "Username must be at least 8 characters.",
+  })
+        .max(20, {
+        message: "Username must be at most 20 characters.",
+    }),
+    email: z.string()
+        .email({
+        message: "Invalid email address.",
+    })
+     ,
+    password: z.string()
+        .min(8, {
+        message: "Password must be at least 8 characters.",
+    })
+       .regex(passwordRegex,{
+        message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+    }),
+      confirmPassword: z.string(),
+  file: z
+    .any()
+    .refine(
+      (file) =>
+        !file ||
+        (file instanceof File &&
+          ACCEPTED_FILE_TYPES.includes(file.type) &&
+          file.size <= MAX_FILE_SIZE
+        ),
+      {
+        message: `File must be a JPG, PNG, or GIF and less than ${MAX_FILE_SIZE / (1024 * 1024)}MB.`,
+        path: ["file"],
+      }
+    )
+    }).refine((data) => data.password === data.confirmPassword,{
+        message: "Passwords do not match.",
+        path: ["confirmPassword"],// show error on confirmPassword field
     })
 
-    // State for password visibility
-    const [showPassword, setShowPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-    function onSubmit(data: FormValues) {
-        // handle form submission
-        console.log(data)
+export default function RegisterForm() {
+    const [showPassword,setShowPassword] = useState(false);
+    const [preview,setPreview] = useState<string | null>(null);
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues:{
+            username: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+            file:undefined
+        }
+    })
+    function onSubmit(values: z.infer<typeof formSchema>) {
+        console.log(values);
     }
+    
+  return (
+    <Card className="w-full max-w-md mx-auto mt-10">
+      <CardHeader>
+        <CardTitle>Register</CardTitle>
+        <CardDescription>Create a new account</CardDescription>
+        <CardAction>Card Action</CardAction>
+      </CardHeader>
+      <CardContent>
+   <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 p-10">
+       
+        {/* Username */}
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input placeholder="shadcn" {...field} />
+              </FormControl>
+              <FormDescription>This is your public display name.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-    return (
-        <Card className="max-w-md mx-auto mt-10">
-            <CardHeader>
-                <CardTitle>Register</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        {/* username fields */}
-                        <FormField
-                            control={form.control}
-                            name="username"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Your name" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        {/* email fields */}
-                        <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Email</FormLabel>
-                                    <FormControl>
-                                        <Input type="email" placeholder="you@example.com" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        {/* password fields */}
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Password</FormLabel>
-                                    <FormControl>
-                                        <div className="relative">
-                                            <Input
-                                                type={showPassword ? "text" : "password"}
-                                                placeholder="********"
-                                                {...field}
-                                            />
-                                            <button
-                                                type="button"
-                                                tabIndex={-1}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500"
-                                                onClick={() => setShowPassword((v) => !v)}
-                                                aria-label={showPassword ? "Hide password" : "Show password"}
-                                            >
-                                                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                                            </button>
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+        {/* Email */}
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="your@email.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-                        {/* confirm password fields */}
-                        <FormField
+        {/* Password */}
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                  <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Strong password"
+                {...field}
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-2 text-xl"
+                onClick={() => setShowPassword((prev) => !prev)}
+                tabIndex={-1}
+              >
+                {showPassword ? <IoMdEyeOff />  : <IoMdEye />
+}
+              </button>
+            </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Confirm Password */}
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Confirm Password</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="Repeat password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+            <FormField
                             control={form.control}
-                            name="confirmPassword"
+                            name="file"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Confirm Password</FormLabel>
+                                    <FormLabel>Upload File</FormLabel>
                                     <FormControl>
-                                        <div className="relative">
-                                            <Input
-                                                type={showConfirmPassword ? "text" : "password"}
-                                                placeholder="********"
-                                                {...field}
-                                            />
-                                            <button
-                                                type="button"
-                                                tabIndex={-1}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-500"
-                                                onClick={() => setShowConfirmPassword((v) => !v)}
-                                                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                                            >
-                                                {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
-                                            </button>
-                                        </div>
+                                        <Input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={e => {
+                                                const file = e.target.files?.[0];
+                                                field.onChange(file);
+                                                if (file) {
+                                                    setPreview(URL.createObjectURL(file));
+                                                } else {
+                                                    setPreview(null);
+                                                }
+                                            }}
+                                        />
                                     </FormControl>
                                     <FormMessage />
+                                    {preview && (
+                                        <Image
+                                            src={preview}
+                                            alt="Preview"
+                                            width={128}
+                                            height={128}
+                                            className="mt-4 w-32 h-32 object-cover rounded"
+                                        />
+                                    )}
                                 </FormItem>
                             )}
                         />
-
-                        <Button type="submit" className="w-full">Register</Button>
-                    </form>
-                </Form>
-            </CardContent>
-        </Card>
-    )
+                   <Button type="submit">Register</Button>
+      </form> 
+      </Form>
+      </CardContent>
+      <CardFooter>
+      </CardFooter>
+    </Card>
+  )
 }
